@@ -121,6 +121,59 @@ void Candela::RenderEntity(Entity& entity, GLClasses::Shader& shader, Frustum& f
 	}
 }
 
+void Candela::RenderEntityV(Entity& entity, GLClasses::Shader& shader)
+{
+	const glm::mat4 ZOrientMatrix = glm::mat4(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f));
+
+	Object* object = entity.m_Object;
+
+	shader.SetMatrix4("u_ModelMatrix", entity.m_Model);
+
+	int DrawCalls = 0;
+
+	int MeshesRendered = 0;
+
+	for (auto& e : object->m_Meshes)
+	{
+		bool EntityTransparent = entity.m_TranslucencyAmount > 0.01f;
+
+		if (EntityTransparent) {
+			continue;
+		}
+
+		MeshesRendered++;
+		__TotalMeshesRendered++;
+		__MainViewMeshesRendered++;
+
+		const Mesh* mesh = &e;
+
+		const GLClasses::VertexArray& VAO = mesh->m_VertexArray;
+		VAO.Bind();
+
+		DrawCalls++;
+
+		if (mesh->m_Indexed)
+		{
+			glDrawElements(GL_TRIANGLES, mesh->m_IndicesCount, GL_UNSIGNED_INT, 0);
+			PolygonsRendered += mesh->m_IndicesCount / 3;
+		}
+
+		else
+		{
+			glDrawArrays(GL_TRIANGLES, 0, mesh->m_VertexCount);
+			PolygonsRendered += mesh->m_VertexCount / 3;
+		}
+
+		VAO.Unbind();
+
+	}
+
+	if (std::fmod(glfwGetTime(), 0.5f) < 0.001f)
+	{
+		std::cout << "\nDRAW CALLS : " << DrawCalls;
+	}
+}
+
 uint64_t Candela::QueryPolygonCount()
 {
 	return PolygonsRendered;

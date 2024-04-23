@@ -204,6 +204,7 @@
     <ClInclude Include="Core\Utils\Random.h" />
     <ClInclude Include="Core\Utils\Timer.h" />
     <ClInclude Include="Core\Utils\Vertex.h" />
+    <ClInclude Include="Core\Voxelizer.h" />
     <ClInclude Include="Dependencies\crc\CRC.h" />
     <ClInclude Include="Dependencies\imguizmo\GraphEditor.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -271,6 +272,7 @@
     <ClCompile Include="Core\TAAJitter.cpp" />
     <ClCompile Include="Core\Threadpool.cpp" />
     <ClCompile Include="Core\Tonemap.cpp" />
+    <ClCompile Include="Core\Voxelizer.cpp" />
     <ClCompile Include="Dependencies\glad\src\glad.c" />
     <ClCompile Include="Dependencies\imguizmo\GraphEditor.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -306,6 +308,7 @@
     <None Include="Core\Shaders\CheckerboardReconstruct.glsl" />
     <None Include="Core\Shaders\ClearData.comp" />
     <None Include="Core\Shaders\ClearIntData.comp" />
+    <None Include="Core\Shaders\ClearVolume.comp" />
     <None Include="Core\Shaders\Collide.comp" />
     <None Include="Core\Shaders\ColorPass.glsl" />
     <None Include="Core\Shaders\ConeTraceConvolution.glsl" />
@@ -380,6 +383,9 @@
     <None Include="Core\Shaders\UpdateRadianceProbes.glsl" />
     <None Include="Core\Shaders\Volumetrics.glsl" />
     <None Include="Core\Shaders\VolumetricsComposite.glsl" />
+    <None Include="Core\Shaders\VoxelizationGeometry.geom" />
+    <None Include="Core\Shaders\VoxelizationRadiance.glsl" />
+    <None Include="Core\Shaders\VoxelizationVertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Core\Shaders\Surfel\Readme.txt" />

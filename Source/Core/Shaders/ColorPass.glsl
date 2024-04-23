@@ -20,6 +20,8 @@ layout (location = 0) out vec3 o_Color;
 
 layout(rgba16f, binding = 0) uniform image2D o_NormalLFe;
 
+layout(R8UI, binding = 4) uniform uimage3D o_VoxelVolume;
+
 in vec2 v_TexCoords;
 
 uniform sampler2D u_AlbedoTexture;
@@ -53,6 +55,10 @@ uniform vec2 u_Dims;
 uniform bool u_DoSSShadow;
 
 uniform int u_Frame;
+
+uniform int u_VoxelRange;
+uniform int u_VoxelVolSize;
+uniform int u_DoVoxelization;
 
 uniform int u_DebugMode;
 
@@ -291,6 +297,99 @@ float FilterShadows(vec3 WorldPosition, vec3 N, int Samples, float ExpStep, bool
 }
 
 
+// Voxelization
+vec3 TransformToVoxelSpace(vec3 WorldPosition) {
+	WorldPosition = WorldPosition - u_InverseView[3].xyz;
+	float Size = float(u_VoxelRange);
+	float HalfExtent = Size / 2.0f;
+	vec3 ScaledPos = WorldPosition / HalfExtent;
+	vec3 Voxel = ScaledPos;
+	Voxel = Voxel * 0.5f + 0.5f;
+	return (Voxel * float(u_VoxelVolSize));
+}
+
+// Voxelization
+bool DDA(vec3 origin, vec3 direction, int dist, out vec3 normal, out vec3 world_pos)
+{
+	const vec3 BLOCKNORMALS[6] = vec3[](vec3(1.0, 0.0, 0.0),vec3(-1.0, 0.0, 0.0),vec3(0.0, 1.0, 0.0),vec3(0.0, -1.0, 0.0),vec3(0.0, 0.0, 1.0),vec3(0.0, 0.0, -1.0));
+
+	origin = TransformToVoxelSpace(origin);
+
+	
+	world_pos = origin;
+
+	vec3 Temp;
+	vec3 VoxelCoord; 
+	vec3 FractPosition;
+
+	Temp.x = direction.x > 0.0 ? 1.0 : 0.0;
+	Temp.y = direction.y > 0.0 ? 1.0 : 0.0;
+	Temp.z = direction.z > 0.0 ? 1.0 : 0.0;
+	vec3 plane = floor(world_pos + Temp);
+
+	for (int x = 0; x < dist; x++)
+	{
+		if (!InsideVolume(world_pos)) {
+			break;
+		}
+
+		vec3 Next = (plane - world_pos) / direction;
+		int side = 0;
+
+		if (Next.x < min(Next.y, Next.z)) {
+			world_pos += direction * Next.x;
+			world_pos.x = plane.x;
+			plane.x += sign(direction.x);
+			side = 0;
+		}
+
+		else if (Next.y < Next.z) {
+			world_pos += direction * Next.y;
+			world_pos.y = plane.y;
+			plane.y += sign(direction.y);
+			side = 1;
+		}
+
+		else {
+			world_pos += direction * Next.z;
+			world_pos.z = plane.z;
+			plane.z += sign(direction.z);
+			side = 2;
+		}
+
+		VoxelCoord = (plane - Temp);
+		int Side = ((side + 1) * 2) - 1;
+		if (side == 0) {
+			if (world_pos.x - VoxelCoord.x > 0.5){
+				Side = 0;
+			}
+		}
+
+		else if (side == 1){
+			if (world_pos.y - VoxelCoord.y > 0.5){
+				Side = 2;
+			}
+		}
+
+		else {
+			if (world_pos.z - VoxelCoord.z > 0.5){
+				Side = 4;
+			}
+		}
+
+		normal = BLOCKNORMALS[Side];
+		uint data = imageLoad(o_VoxelVolume, ivec3(VoxelCoord.xyz)).x;
+
+		if (data != 0)
+		{
+			return true; 
+		}
+	}
+
+	return false;
+}
+
+// Convert texcoord -> worldspace direcction
 vec3 SampleIncidentRayDirection(vec2 screenspace)
 {
 	vec4 clip = vec4(screenspace * 2.0f - 1.0f, -1.0, 1.0);
@@ -317,6 +416,9 @@ void main()
 
 	vec3 RayOrigin = u_InverseView[3].xyz;
 	vec3 RayDirection = normalize(SampleIncidentRayDirection(v_TexCoords));
+	
+
+	
 	float BayerHash = fract(fract(mod(float(u_Frame), 256.0f) * (1.0 / 1.61803398)) + bayer32(gl_FragCoord.st));
 
 	float SurfaceDistance = 1000000.0f;
@@ -446,7 +548,22 @@ void main()
 		o_Color = vec3(PBR.y);
 	}  else if (u_DebugMode == 11) {
 		o_Color = vec3(EmissiveColor);
+	}	else if (u_DebugMode == 12) {
+
+		if (u_DoVoxelization != 1) {
+			o_Color = vec3(0.);
+		}
+
+		else {
+			vec3 w,n;
+			bool IntersectedVoxelizedWorld = DDA(RayOrigin, RayDirection, int(64), n, w);
+			o_Color = vec3(0.,0.,0);
+			if (IntersectedVoxelizedWorld) {
+				o_Color = n*0.5+0.5;
+			}
+		}
 	}
+
 
 	//o_Color = texture(u_DebugTexture, v_TexCoords).xyz; // / max(texture(u_DebugTexture, v_TexCoords).w, 0.0001f);
 	o_Color = max(o_Color, 0.0f);

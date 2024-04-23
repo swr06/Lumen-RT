@@ -41,6 +41,8 @@ PLEASE DO NOT CLAIM MY WORK AS YOUR OWN.
 #include "ProbeGI.h"
 #include "Utils/Timer.h"
 
+#include "Voxelizer.h"
+
 #include "Tonemap.h"
 
 #include "ProbeMap.h"
@@ -156,6 +158,9 @@ static bool CompleteTransmittance = false;
 
 // Screenspace shadow
 static bool DoScreenspaceShadow = false;
+
+// Voxelization
+static bool DoVoxelization = false;
 
 // Post 
 static int SelectedTonemap = 0;
@@ -301,7 +306,7 @@ public:
 
 				if (!FBODebugMode) {
 					// Drop down box
-					const char* DebugLabelItems[] = { "Default", "Probe Debug", "Indirect Diffuse", "Ambient Occlusion", "Indirect Specular", "Direct Shadows", "Volumetrics", "Probe GI", "Albedo", "Normals", "Roughness", "Metalness", "Emissivity" };
+					const char* DebugLabelItems[] = { "Default", "Probe Debug", "Indirect Diffuse", "Ambient Occlusion", "Indirect Specular", "Direct Shadows", "Volumetrics", "Probe GI", "Albedo", "Normals", "Roughness", "Metalness", "Emissivity", "Voxelization"};
 					static const char* CurrentDebugLabel = DebugLabelItems[0];
 
 					if (ImGui::BeginCombo("##combo", CurrentDebugLabel))
@@ -553,6 +558,9 @@ public:
 				ImGui::Checkbox("Uniform Density Volumetric Fog?", &UniformDensityFog);
 			}
 
+			ImGui::NewLine();
+			ImGui::NewLine();
+			ImGui::Checkbox("Do Voxelization?", &DoVoxelization);
 			ImGui::NewLine();
 			ImGui::NewLine();
 			ImGui::Checkbox("Checkerboard Lighting? (effectively computes lighting for half the pixels)", &DoCheckering);
@@ -1219,6 +1227,9 @@ void Candela::StartPipeline()
 	GLuint TonemapLUT = 0;
 	Tonemapper::Initialize("Res/tonymmf.dds", TonemapLUT);
 
+	// Voxelizer
+	Voxelizer::CreateVolumes();
+	Voxelizer::RecompileShaders();
 
 	while (!glfwWindowShouldClose(app.GetWindow()))
 	{
@@ -1413,6 +1424,12 @@ void Candela::StartPipeline()
 		if (UpdateIrradianceVolume) {
 			ProbeGI::UpdateProbes(app.GetCurrentFrame(), Intersector, UniformBuffer, Skymap.GetID(), FilterIrradianceVolume && !UpdatedLightThisFrame);
 		}
+
+		// VOXELIZE
+
+		Voxelizer::Voxelize(Camera.GetPosition(), EntityRenderList);
+
+		////
 
 		// Render GBuffer
 
@@ -2115,6 +2132,11 @@ void Candela::StartPipeline()
 		LightingShader.SetInteger("u_ProbePlayerDepth", 21);
 		LightingShader.SetInteger("u_TransparentDepth", 23);
 		LightingShader.SetInteger("u_DebugMode", DebugMode);
+
+		LightingShader.SetInteger("u_VoxelRange", Voxelizer::GetVolRange());
+		LightingShader.SetInteger("u_VoxelVolSize", Voxelizer::GetVolSize());
+		LightingShader.SetInteger("u_DoVoxelization", DoVoxelization);
+
 		LightingShader.SetBool("u_DoVolumetrics", DoVolumetrics);
 		LightingShader.SetBool("u_DoSSShadow", DoScreenspaceShadow);
 		LightingShader.SetVector2f("u_FocusPoint", DOFFocusPoint / glm::vec2(app.GetWidth(), app.GetHeight()));
@@ -2222,6 +2244,7 @@ void Candela::StartPipeline()
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, DOFSSBO);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, PlayerSSBO);
 		glBindImageTexture(0, GBuffer.GetTexture(3), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
+		glBindImageTexture(4, Voxelizer::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 
 		ScreenQuadVAO.Bind();
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -2521,7 +2544,7 @@ void Candela::StartPipeline()
 		TAAShader.SetBool("u_Enabled", DoTAA);
 		TAAShader.SetBool("u_FSRU", FSR);
 		TAAShader.SetFloat("u_InternalRenderResolution", InternalRenderResolution);
-		TAAShader.SetFloat("u_TAAStrengthMultiplier", TAAStrengthMultiplier);
+		TAAShader.SetFloat("u_TAAStrengthMultiplier", DebugMode > 0 ? 0.0f : TAAStrengthMultiplier);
 		TAAShader.SetFloat("u_TAAClipBias", TAAClipBias);
 		TAAShader.SetVector2f("u_CurrentJitter", GetTAAJitter(app.GetCurrentFrame()));
 
@@ -2591,7 +2614,7 @@ void Candela::StartPipeline()
 		PostFXCombineShader.SetFloat("u_FXAAAmt", FXAAStrength);
 		PostFXCombineShader.SetFloat("u_CAScale", CAScale_);
 		PostFXCombineShader.SetFloat("u_PlayerShadow", PlayerShadowSmooth);
-		PostFXCombineShader.SetFloat("u_LensFlareStrength", LensFlareStrength);
+		PostFXCombineShader.SetFloat("u_LensFlareStrength", DebugMode > 0 ? 0.0f : LensFlareStrength);
 		PostFXCombineShader.SetVector2f("u_SunScreenPosition", SunScreenspaceCoord);
 		PostFXCombineShader.SetFloat("u_InternalRenderResolution", InternalRenderResolution);
 

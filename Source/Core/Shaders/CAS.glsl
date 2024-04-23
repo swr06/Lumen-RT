@@ -138,7 +138,7 @@ void main()
 
     vec3 OriginalColor = texelFetch(u_Texture, Pixel, 0).xyz;
 
-    float SharpeningAmount = 0.49f;
+    float SharpeningAmount = 0.55f;
 
     if (u_RenderScale < 0.8f) {
         SharpeningAmount += 0.1f;
