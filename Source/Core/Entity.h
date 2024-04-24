@@ -44,5 +44,7 @@ namespace Candela
 		bool m_IsPhysicsObject = false;
 		bool m_UseAlbedoMap = true;
 		bool m_UsePBRMap = true;
+
+		bool m_IsSphereLight = false;
 	};
 }

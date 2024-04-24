@@ -41,6 +41,8 @@ PLEASE DO NOT CLAIM MY WORK AS YOUR OWN.
 #include "ProbeGI.h"
 #include "Utils/Timer.h"
 
+#include "SphereLight.h"
+
 #include "Voxelizer.h"
 
 #include "Tonemap.h"
@@ -1067,7 +1069,8 @@ void Candela::StartPipeline()
 	// Create sphere 
 	Entity SphereEntity(&Sphere);
 	SphereEntity.m_Model = glm::translate(glm::mat4(1.0f), glm::vec3(-14.0f, 6.25f, -0.1f));
-
+	//SphereEntity.m_IsSphereLight = true; 
+	//SphereEntity.m_EmissiveAmount = 8.0f;
 
 	// Add entities to the render list 
 	EntityRenderList = { &MainModelEntity, &DragonEntity, &MetalObjectEntity, &GlassDragon, &SphereEntity };
@@ -1201,6 +1204,14 @@ void Candela::StartPipeline()
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * 1, &PlayerInShadow, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+	// Sphere Lights 
+	GLuint SphereLightSSBO = 0;
+	std::vector<SphereLight> SphereLights;
+	glGenBuffers(1, &SphereLightSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, SphereLightSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * 8 * 16, &SphereLightSSBO, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 
 	// Generate shadow maps
 	ShadowHandler::GenerateShadowMaps();
@@ -1260,6 +1271,23 @@ void Candela::StartPipeline()
 		// Prepare Intersector
 		Intersector.PushEntities(EntityRenderList);
 		Intersector.BufferEntities();
+
+		SphereLights.clear();
+
+		for (auto& e : EntityRenderList) {
+			if (e->m_IsSphereLight) {
+				SphereLight s;
+				s.PositionRadius = glm::vec4(glm::vec3(e->m_Model[3]), 1.0f);
+				s.ColorEmissivitys = glm::vec4(glm::vec3(1), 1.0f);
+				SphereLights.push_back(s);
+			}
+		}
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, SphereLightSSBO);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * 8 * SphereLights.size(), SphereLights.data(), GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+		// 
 
 		// Resize FBOs
 		GBuffers[0].SetSize(app.GetWidth() * InternalRenderResolution, app.GetHeight() * InternalRenderResolution);
@@ -1427,7 +1455,10 @@ void Candela::StartPipeline()
 
 		// VOXELIZE
 
-		Voxelizer::Voxelize(Camera.GetPosition(), EntityRenderList);
+		if (DoVoxelization)
+		{
+			Voxelizer::Voxelize(Camera.GetPosition(), EntityRenderList);
+		}
 
 		////
 
@@ -2243,6 +2274,8 @@ void Candela::StartPipeline()
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ProbeGI::GetProbeDataSSBO());
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, DOFSSBO);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, PlayerSSBO);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, SphereLightSSBO);
+
 		glBindImageTexture(0, GBuffer.GetTexture(3), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
 		glBindImageTexture(4, Voxelizer::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 
@@ -2544,7 +2577,7 @@ void Candela::StartPipeline()
 		TAAShader.SetBool("u_Enabled", DoTAA);
 		TAAShader.SetBool("u_FSRU", FSR);
 		TAAShader.SetFloat("u_InternalRenderResolution", InternalRenderResolution);
-		TAAShader.SetFloat("u_TAAStrengthMultiplier", DebugMode > 0 ? 0.0f : TAAStrengthMultiplier);
+		TAAShader.SetFloat("u_TAAStrengthMultiplier", DebugMode >= 0 ? 0.0f : TAAStrengthMultiplier);
 		TAAShader.SetFloat("u_TAAClipBias", TAAClipBias);
 		TAAShader.SetVector2f("u_CurrentJitter", GetTAAJitter(app.GetCurrentFrame()));
 
@@ -2609,12 +2642,12 @@ void Candela::StartPipeline()
 		PostFXCombineShader.SetInteger("u_BloomBrightTexture", 6);
 		PostFXCombineShader.SetInteger("u_Depth", 7);
 		PostFXCombineShader.SetInteger("u_BlueNoise", 8);
-		PostFXCombineShader.SetBool("u_BloomEnabled", DoBloom);
-		PostFXCombineShader.SetBool("u_FXAAEnabled", DoFXAA);
+		PostFXCombineShader.SetBool("u_BloomEnabled", DoBloom && DebugMode==-1);
+		PostFXCombineShader.SetBool("u_FXAAEnabled", DoFXAA && DebugMode==-1);
 		PostFXCombineShader.SetFloat("u_FXAAAmt", FXAAStrength);
 		PostFXCombineShader.SetFloat("u_CAScale", CAScale_);
 		PostFXCombineShader.SetFloat("u_PlayerShadow", PlayerShadowSmooth);
-		PostFXCombineShader.SetFloat("u_LensFlareStrength", DebugMode > 0 ? 0.0f : LensFlareStrength);
+		PostFXCombineShader.SetFloat("u_LensFlareStrength", DebugMode >= 0 ? 0.0f : LensFlareStrength);
 		PostFXCombineShader.SetVector2f("u_SunScreenPosition", SunScreenspaceCoord);
 		PostFXCombineShader.SetFloat("u_InternalRenderResolution", InternalRenderResolution);
 

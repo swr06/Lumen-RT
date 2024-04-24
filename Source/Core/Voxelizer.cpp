@@ -89,6 +89,9 @@ namespace Candela {
 
 		for (auto& e : EntityList) {
 
+			if (e->m_EmissiveAmount > 0.001f) {
+				continue;
+			}
 			RenderEntityV(*e, *VoxelizeShader);
 		}
 	}

@@ -197,6 +197,7 @@
     <ClInclude Include="Core\ShadowRenderer.h" />
     <ClInclude Include="Core\SkyShadowMap.h" />
     <ClInclude Include="Core\SpatioTemporalBN.h" />
+    <ClInclude Include="Core\SphereLight.h" />
     <ClInclude Include="Core\TAAJitter.h" />
     <ClInclude Include="Core\Threadpool.h" />
     <ClInclude Include="Core\Tonemap.h" />

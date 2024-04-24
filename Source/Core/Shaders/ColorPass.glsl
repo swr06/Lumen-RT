@@ -80,6 +80,11 @@ struct ProbeMapPixel {
 	vec2 Packed;
 };
 
+struct SphereLight {
+	vec4 PositionRadius;
+	vec4 ColorEmissive;
+};
+
 layout (std430, binding = 4) buffer SSBO_ProbeMaps {
 	ProbeMapPixel MapData[]; // x has luminance data, y has packed depth and depth^2
 };
@@ -93,6 +98,9 @@ layout (std430, binding = 1) buffer EyeAdaptation_SSBO {
     float o_FocusDepth;
 };
 
+layout (std430, binding = 5) buffer SSBO_SphereLights {
+	SphereLight SphereLights[];
+};
 
 float LinearizeDepth(float depth)
 {
@@ -417,8 +425,6 @@ void main()
 	vec3 RayOrigin = u_InverseView[3].xyz;
 	vec3 RayDirection = normalize(SampleIncidentRayDirection(v_TexCoords));
 	
-
-	
 	float BayerHash = fract(fract(mod(float(u_Frame), 256.0f) * (1.0 / 1.61803398)) + bayer32(gl_FragCoord.st));
 
 	float SurfaceDistance = 1000000.0f;
@@ -465,6 +471,22 @@ void main()
 	vec4 NormalLF = texelFetch(u_NormalLFTexture, Pixel, 0);
 	vec3 Albedo = texelFetch(u_AlbedoTexture, Pixel, 0).xyz;
 	vec3 PBR = texelFetch(u_PBRTexture, Pixel, 0).xyz;
+
+	// DEBUG 
+	/////////
+	/////vec3 n,w;
+	/////vec3 ddd = -normalize(WorldPosition - SphereLights[0].PositionRadius.xyz);
+	/////bool ints = DDA(WorldPosition + NormalLF.xyz * 1.0f + ddd * 0.5f, ddd, int(64), n, w);
+	/////
+	/////	o_Color = vec3(1.);
+	/////
+	/////if (ints) {
+	/////	o_Color = vec3(0.);
+	/////}
+	/////
+	/////return;
+	/////
+	/////////
 
 	vec3 Incident = (u_ViewerPosition - WorldPosition);
 	SurfaceDistance = length(Incident);
@@ -556,7 +578,7 @@ void main()
 
 		else {
 			vec3 w,n;
-			bool IntersectedVoxelizedWorld = DDA(RayOrigin, RayDirection, int(64), n, w);
+			bool IntersectedVoxelizedWorld = DDA(RayOrigin, RayDirection, int(256), n, w);
 			o_Color = vec3(0.,0.,0);
 			if (IntersectedVoxelizedWorld) {
 				o_Color = n*0.5+0.5;
@@ -566,5 +588,6 @@ void main()
 
 
 	//o_Color = texture(u_DebugTexture, v_TexCoords).xyz; // / max(texture(u_DebugTexture, v_TexCoords).w, 0.0001f);
+	//SphereLights[0].PositionRadius.xyz
 	o_Color = max(o_Color, 0.0f);
 }
