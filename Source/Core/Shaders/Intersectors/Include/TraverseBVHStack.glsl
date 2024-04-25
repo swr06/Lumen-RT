@@ -454,6 +454,41 @@ void GetData(in const vec4 TUVW, in const int Mesh, in const int TriangleIndex, 
     Alpha = intBitsToFloat(BVHEntities[EntityIdx].Data[1]);
 }
 
+void GetDataFast(in const vec4 TUVW, in const int Mesh, in const int TriangleIndex, in const int EntityIdx, out vec3 Normal, out vec3 Albedo, out float Emissivity, out float Alpha) {
+
+    if (TUVW.x < 0.0f || Mesh < 0) {
+        Normal = vec3(-1.0f);
+        Albedo = vec3(0.0f);
+        Emissivity = 0.0f;
+        return;
+    }
+
+    Triangle triangle = BVHTris[TriangleIndex];
+
+    Vertex A = BVHVertices[triangle.PackedData[0]];
+    Vertex B = BVHVertices[triangle.PackedData[1]];
+    Vertex C = BVHVertices[triangle.PackedData[2]];
+
+    vec2 UV = (unpackHalf2x16(A.PackedData.w) * TUVW.y) + (unpackHalf2x16(B.PackedData.w) * TUVW.z) + (unpackHalf2x16(C.PackedData.w) * TUVW.w);
+    vec3 MeshNormal = normalize((UnpackNormal(A.PackedData.xy) * TUVW.y) + (UnpackNormal(B.PackedData.xy) * TUVW.z) + (UnpackNormal(C.PackedData.xy) * TUVW.w));
+
+    int Ref = BVHTextureReferences[Mesh].Albedo;
+
+    Normal = MeshNormal;
+    Albedo = vec3(0.0f);
+
+    if (Ref > -1 && Mesh > -1 && TUVW.x > 0.) {
+        Albedo = textureLod(Textures[Ref], UV.xy, 7.0f).xyz; 
+    }
+
+    else {
+        Albedo = BVHTextureReferences[Mesh].ModelColor.xyz;
+    }
+
+    Emissivity = intBitsToFloat(BVHEntities[EntityIdx].Data[0]);
+    Alpha = intBitsToFloat(BVHEntities[EntityIdx].Data[1]);
+}
+
 // Intersect prototypes 
 void IntersectRay(vec3 RayOrigin, vec3 RayDirection, out vec4 TUVW, out int Mesh, out int TriangleIdx, out vec4 Albedo, out vec3 Normal) {
     
@@ -502,6 +537,51 @@ void IntersectRayIgnoreTransparent(vec3 RayOrigin, vec3 RayDirection, out vec4 T
 }
 
 
+void IntersectRayFast(vec3 RayOrigin, vec3 RayDirection, out vec4 TUVW, out int Mesh, out int TriangleIdx, out vec4 Albedo, out vec3 Normal) {
+    
+    int IntersectedEntity = -1;
+    int Iters = -1;
+    TUVW = IntersectScene(RayOrigin, RayDirection, Mesh, TriangleIdx, IntersectedEntity, Iters);
+
+    float t = 0.0f;
+    GetDataFast(TUVW, Mesh, TriangleIdx, IntersectedEntity, Normal, Albedo.xyz, Albedo.w, t);
+}
+
+void IntersectRayFast(vec3 RayOrigin, vec3 RayDirection, out vec4 TUVW, out int Mesh, out int TriangleIdx, out vec4 Albedo, out vec3 Normal, out float Alpha) {
+    
+    int IntersectedEntity = -1;
+    int Iters = -1;
+    TUVW = IntersectScene(RayOrigin, RayDirection, Mesh, TriangleIdx, IntersectedEntity, Iters);
+
+    GetDataFast(TUVW, Mesh, TriangleIdx, IntersectedEntity, Normal, Albedo.xyz, Albedo.w, Alpha);
+}
+
+void IntersectRayFast(vec3 RayOrigin, vec3 RayDirection, out vec4 TUVW, out int Mesh, out int TriangleIdx, out vec4 Albedo, out vec3 Normal, out float Alpha, out int Iters) {
+    
+    int IntersectedEntity = -1;
+    TUVW = IntersectScene(RayOrigin, RayDirection, Mesh, TriangleIdx, IntersectedEntity, Iters);
+
+    GetDataFast(TUVW, Mesh, TriangleIdx, IntersectedEntity, Normal, Albedo.xyz, Albedo.w, Alpha);
+}
+
+void IntersectRayIgnoreTransparentFast(vec3 RayOrigin, vec3 RayDirection, out vec4 TUVW, out int Mesh, out int TriangleIdx, out vec4 Albedo, out vec3 Normal) {
+    
+    int IntersectedEntity = -1;
+    int Iters = -1;
+    TUVW = IntersectSceneIgnoreTransparent(RayOrigin, RayDirection, Mesh, TriangleIdx, IntersectedEntity, Iters);
+
+    float t = 0.0f;
+    GetDataFast(TUVW, Mesh, TriangleIdx, IntersectedEntity, Normal, Albedo.xyz, Albedo.w, t);
+}
+
+void IntersectRayIgnoreTransparentFast(vec3 RayOrigin, vec3 RayDirection, out vec4 TUVW, out int Mesh, out int TriangleIdx, out vec4 Albedo, out vec3 Normal, out float Alpha) {
+    
+    int IntersectedEntity = -1;
+    int Iters = -1;
+    TUVW = IntersectSceneIgnoreTransparent(RayOrigin, RayDirection, Mesh, TriangleIdx, IntersectedEntity, Iters);
+
+    GetDataFast(TUVW, Mesh, TriangleIdx, IntersectedEntity, Normal, Albedo.xyz, Albedo.w, Alpha);
+}
 
 
 // Shadow 

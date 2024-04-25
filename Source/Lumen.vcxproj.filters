@@ -309,6 +309,9 @@
     <ClInclude Include="Core\SphereLight.h">
       <Filter>Source Files\Lumen\Lumen-Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\LightCuller.h">
+      <Filter>Source Files\Lumen\Lumen-Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dependencies\imgui\imgui.cpp">
@@ -492,6 +495,9 @@
       <Filter>Source Files\Lumen\Lumen-Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Voxelizer.cpp">
+      <Filter>Source Files\Lumen\Lumen-Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\LightCuller.cpp">
       <Filter>Source Files\Lumen\Lumen-Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -752,6 +758,15 @@
       <Filter>Source Files\Lumen\Lumen-Core\Lumen-Shaders</Filter>
     </None>
     <None Include="Core\Shaders\ClearVolume.comp">
+      <Filter>Source Files\Lumen\Lumen-Core\Lumen-Shaders</Filter>
+    </None>
+    <None Include="Core\Shaders\GenerateCullGrid.comp">
+      <Filter>Source Files\Lumen\Lumen-Core\Lumen-Shaders</Filter>
+    </None>
+    <None Include="Core\Shaders\ClearCullVolume.glsl">
+      <Filter>Source Files\Lumen\Lumen-Core\Lumen-Shaders</Filter>
+    </None>
+    <None Include="Core\Shaders\ClearVVolume.glsl">
       <Filter>Source Files\Lumen\Lumen-Core\Lumen-Shaders</Filter>
     </None>
   </ItemGroup>

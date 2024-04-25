@@ -481,7 +481,7 @@ void main() {
 		int IntersectedTri = -1;
 			
 		// Intersect ray 
-		IntersectRayIgnoreTransparent(RayOrigin, RayDirection, TUVW, IntersectedMesh, IntersectedTri, Albedo, iNormal);
+		IntersectRayIgnoreTransparentFast(RayOrigin, RayDirection, TUVW, IntersectedMesh, IntersectedTri, Albedo, iNormal);
 
 		if (dot(iNormal, RayDirection) > 0.0001f) {
 			iNormal = -iNormal;
@@ -515,7 +515,7 @@ void main() {
 
 				vec3 SecondRayOrigin = HitPosition+iNormal*0.02f;
 				vec3 SecondRayDirection = CosWeightedHemisphere(iNormal,hash2());
-				IntersectRay(SecondRayOrigin, SecondRayDirection, SecondTUVW, SecondIntersectedMesh, SecondIntersectedTri, SecondAlbedo, SecondiNormal);
+				IntersectRayFast(SecondRayOrigin, SecondRayDirection, SecondTUVW, SecondIntersectedMesh, SecondIntersectedTri, SecondAlbedo, SecondiNormal);
 				
 				if (dot(SecondiNormal, SecondRayDirection) > 0.0001f) {
 					SecondiNormal = -SecondiNormal;

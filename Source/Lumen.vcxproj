@@ -158,6 +158,7 @@
     <ClInclude Include="Core\BVH\Intersector.h" />
     <ClInclude Include="Core\CollisionHandler.h" />
     <ClInclude Include="Core\Frustum.h" />
+    <ClInclude Include="Core\LightCuller.h" />
     <ClInclude Include="Core\Macros.h" />
     <ClInclude Include="Core\MathsHelpers.h" />
     <ClInclude Include="Core\Physics.h" />
@@ -236,6 +237,7 @@
     <ClCompile Include="Core\BVH\Intersector.cpp" />
     <ClCompile Include="Core\Entity.cpp" />
     <ClCompile Include="Core\Frustum.cpp" />
+    <ClCompile Include="Core\LightCuller.cpp" />
     <ClCompile Include="Core\MathsHelpers.cpp" />
     <ClCompile Include="Core\Physics.cpp" />
     <ClCompile Include="Core\PhysicsIntegrator.cpp" />
@@ -307,9 +309,11 @@
     <None Include="Core\Shaders\BloomMask.glsl" />
     <None Include="Core\Shaders\CAS.glsl" />
     <None Include="Core\Shaders\CheckerboardReconstruct.glsl" />
+    <None Include="Core\Shaders\ClearCullVolume.glsl" />
     <None Include="Core\Shaders\ClearData.comp" />
     <None Include="Core\Shaders\ClearIntData.comp" />
     <None Include="Core\Shaders\ClearVolume.comp" />
+    <None Include="Core\Shaders\ClearVVolume.glsl" />
     <None Include="Core\Shaders\Collide.comp" />
     <None Include="Core\Shaders\ColorPass.glsl" />
     <None Include="Core\Shaders\ConeTraceConvolution.glsl" />
@@ -321,6 +325,7 @@
     <None Include="Core\Shaders\DiffuseTrace.glsl" />
     <None Include="Core\Shaders\DOFVert.glsl" />
     <None Include="Core\Shaders\FXAA311.glsl" />
+    <None Include="Core\Shaders\GenerateCullGrid.comp" />
     <None Include="Core\Shaders\GenerateHighFreqNormals.glsl" />
     <None Include="Core\Shaders\GlassDeferred.glsl" />
     <None Include="Core\Shaders\GlassDeferredStochastic.glsl" />

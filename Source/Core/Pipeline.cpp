@@ -19,6 +19,7 @@ Read controls.txt for controls
 PLEASE DO NOT CLAIM MY WORK AS YOUR OWN. 
 */
 
+#define USE_STACKLESS_TRAVERSAL
 
 #define STRINGIFY(x) (#x)
 
@@ -71,13 +72,19 @@ PLEASE DO NOT CLAIM MY WORK AS YOUR OWN.
 
 #include "../Dependencies/imguizmo/ImGuizmo.h"
 
+#include "LightCuller.h"
+
 #include <implot.h>
 
 // Externs.
 int __TotalMeshesRendered = 0;
 int __MainViewMeshesRendered = 0;
 
-Candela::RayIntersector<Candela::BVH::StacklessTraversalNode> Intersector;
+#ifdef USE_STACKLESS_TRAVERSAL
+	Candela::RayIntersector<Candela::BVH::StacklessTraversalNode> Intersector;
+#else
+	Candela::RayIntersector<Candela::BVH::StackTraversalNode> Intersector;
+#endif 
 
 Candela::Player Player;
 Candela::FPSCamera& Camera = Player.Camera;
@@ -1212,6 +1219,9 @@ void Candela::StartPipeline()
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * 8 * 16, &SphereLightSSBO, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+	// Light Culler 
+	LightCuller::CreateVolumes();
+
 
 	// Generate shadow maps
 	ShadowHandler::GenerateShadowMaps();
@@ -1286,6 +1296,8 @@ void Candela::StartPipeline()
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, SphereLightSSBO);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * 8 * SphereLights.size(), SphereLights.data(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+		LightCuller::GenerateVolume(Camera.GetPosition(), SphereLightSSBO);
 
 		// 
 
@@ -2278,6 +2290,7 @@ void Candela::StartPipeline()
 
 		glBindImageTexture(0, GBuffer.GetTexture(3), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
 		glBindImageTexture(4, Voxelizer::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		//glBindImageTexture(4, LightCuller::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8UI);
 
 		ScreenQuadVAO.Bind();
 		glDrawArrays(GL_TRIANGLES, 0, 6);

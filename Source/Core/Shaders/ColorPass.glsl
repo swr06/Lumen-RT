@@ -21,6 +21,7 @@ layout (location = 0) out vec3 o_Color;
 layout(rgba16f, binding = 0) uniform image2D o_NormalLFe;
 
 layout(R8UI, binding = 4) uniform uimage3D o_VoxelVolume;
+//layout(RGBA8UI, binding = 4) uniform uimage3D o_VoxelVolume;
 
 in vec2 v_TexCoords;
 

@@ -2,7 +2,7 @@
 
 #include "ModelRenderer.h"
 
-#define VOXELRES 64
+#define VOXELRES 16
 
 namespace Candela {
 
@@ -41,7 +41,7 @@ namespace Candela {
 
 
 		ClearShader = new GLClasses::ComputeShader();
-		ClearShader->CreateComputeShader("Core/Shaders/ClearVolume.comp");
+		ClearShader->CreateComputeShader("Core/Shaders/ClearVVolume.glsl");
 		ClearShader->Compile();
 
 		VoxelizeShader = new GLClasses::Shader();
