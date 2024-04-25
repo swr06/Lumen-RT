@@ -3,10 +3,34 @@
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
-layout(rgba8, binding = 0) uniform image3D o_Texture;
+layout(rgba8ui, binding = 0) uniform uimage3D o_Texture;
+
+uniform vec3 u_Position;
+
+uniform float u_Res;
+uniform float u_Size;
+
+layout (std430, binding = 0) buffer atomicLightIDS {
+    int LightIndicesCounter[];
+};
+
+vec3 ToWorldSpace(vec3 VoxelPos) {
+	VoxelPos /= u_Res;
+	vec3 W = u_Size * (VoxelPos - 0.5f);
+	W += u_Position;
+	return W;
+}
 
 void main() { 
 	ivec3 Texel =  ivec3(gl_GlobalInvocationID.xyz);
 
-	imageStore(o_Texture, ivec3(gl_GlobalInvocationID.xyz), (Texel.x + Texel.y + Texel.z) % 2 == 0 ? vec4(1.) : vec4(0.0f));
-}
+	vec3 WPos = ToWorldSpace(vec3(Texel));
+
+	bool t = false;
+
+	if (distance(WPos, vec3(1.0f, 1.0f, 1.0f)) < 4.) {
+		t= true;
+	}
+
+	imageStore(o_Texture, ivec3(gl_GlobalInvocationID.xyz), t? ivec4(1) : ivec4(0));
+} 

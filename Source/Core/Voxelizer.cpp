@@ -9,7 +9,7 @@ namespace Candela {
 	static GLClasses::Shader* VoxelizeShader;
 	static GLClasses::ComputeShader* ClearShader;
 
-	const float RangeV = 32;
+	const float RangeV = 16;
 
 	static GLuint VoxelMap = 0;
 
@@ -115,8 +115,9 @@ namespace Candela {
 		delete ClearShader;
 		delete VoxelizeShader;
 
+
 		ClearShader = new GLClasses::ComputeShader();
-		ClearShader->CreateComputeShader("Core/Shaders/ClearVolume.comp");
+		ClearShader->CreateComputeShader("Core/Shaders/ClearVVolume.glsl");
 		ClearShader->Compile();
 
 		VoxelizeShader = new GLClasses::Shader();

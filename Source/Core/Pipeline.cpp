@@ -111,6 +111,7 @@ static float RoughnessMultiplier = 1.0f;
 static bool GenerateHighFrequencyNormals = false;
 static float NormalStrength = 0.4f;
 static bool DoNormalFix = true;
+static bool CollidePlayer = false;
 
 // Perf
 static bool DoFrustumCulling = false;
@@ -230,6 +231,7 @@ float DeltaTime = 0.0f;
 
 // Debug views
 static int SelectedDebugView = -1; 
+static bool UpdateLightCullingVolume = false;
 
 // Edit mode 
 static bool EditMode = false;
@@ -572,6 +574,9 @@ public:
 			ImGui::Checkbox("Do Voxelization?", &DoVoxelization);
 			ImGui::NewLine();
 			ImGui::NewLine();
+			ImGui::Checkbox("Update Light Culling Volume?", & UpdateLightCullingVolume);
+			ImGui::NewLine();
+			ImGui::NewLine();
 			ImGui::Checkbox("Checkerboard Lighting? (effectively computes lighting for half the pixels)", &DoCheckering);
 			ImGui::NewLine();
 			ImGui::Checkbox("Use Blue Noise Sampling?", &DO_BL_SAMPLING);
@@ -671,6 +676,9 @@ public:
 				ImGui::SliderFloat("Distortion Coefficient (Pincushion if -ve and Barrel if +ve)", &DistortionK, -1.0f, 1.0f);
 			
 			ImGui::NewLine();
+			ImGui::NewLine();
+			ImGui::NewLine();
+			ImGui::Checkbox("WIP : Test For Collisions (refer console for output)", &CollidePlayer);
 
 		} ImGui::End();
 
@@ -760,6 +768,8 @@ public:
 		if (e.type == Candela::EventTypes::KeyPress && e.key == GLFW_KEY_F2 && this->GetCurrentFrame() > 5)
 		{
 			Candela::ShaderManager::RecompileShaders();
+			Candela::Voxelizer::RecompileShaders();
+			Candela::LightCuller::RecompileShaders();
 			Intersector.Recompile();
 		}
 
@@ -1297,7 +1307,11 @@ void Candela::StartPipeline()
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * 8 * SphereLights.size(), SphereLights.data(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-		LightCuller::GenerateVolume(Camera.GetPosition(), SphereLightSSBO);
+		// Light Culler 
+
+		if (UpdateLightCullingVolume) {
+			LightCuller::GenerateVolume(Camera.GetPosition(), SphereLightSSBO);
+		}
 
 		// 
 
@@ -1383,7 +1397,7 @@ void Candela::StartPipeline()
 
 		// Collide
 
-		if (false) {
+		if (CollidePlayer) {
 			CollisionQuery Query;
 			Query.Min = glm::vec4(Camera.GetPosition() - 0.1f, 1.0f);
 			Query.Max = glm::vec4(Camera.GetPosition() + 0.1f, 1.0f);
@@ -1402,7 +1416,7 @@ void Candela::StartPipeline()
 			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::ivec4) * 1, &Retrieved);;
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-			if (app.GetCurrentFrame() % 16 == 0)
+			if (app.GetCurrentFrame() % 8 == 0)
 				std::cout << "\nPlayer Collision Test Result : " << Retrieved.x << "  " << Retrieved.y << "  " << Retrieved.z << "  " << Retrieved.w << "  ";
 		}
 
