@@ -11,7 +11,7 @@ namespace Candela {
 
 	const float RangeV = 48;
 
-	static GLuint CullVolume = 0;
+	static GLuint CullVolumes[4];
 
 	static GLuint AtomicIndicesSSBO = 0;
 
@@ -32,16 +32,19 @@ namespace Candela {
 
 	void LightCuller::CreateVolumes()
 	{
-		glGenTextures(1, &CullVolume);
-		glBindTexture(GL_TEXTURE_3D, CullVolume);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-		glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8UI, LIGHTCULLGRIDRES, LIGHTCULLGRIDRES, LIGHTCULLGRIDRES, 0, GL_RGBA_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 
+		for (int i = 0; i < 4; i++) {
 
+			glGenTextures(1, &CullVolumes[i]);
+			glBindTexture(GL_TEXTURE_3D, CullVolumes[i]);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			glTexImage3D(GL_TEXTURE_3D, 0, GL_R8UI, LIGHTCULLGRIDRES, LIGHTCULLGRIDRES, LIGHTCULLGRIDRES, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+		}
+		
 		ClearShader = new GLClasses::ComputeShader();
 		ClearShader->CreateComputeShader("Core/Shaders/ClearCullVolume.glsl");
 		ClearShader->Compile();
@@ -62,7 +65,6 @@ namespace Candela {
 
 		Position = SnapPosition(Position);
 
-		glBindTexture(GL_TEXTURE_3D, CullVolume);
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_BLEND);
@@ -73,24 +75,30 @@ namespace Candela {
 		int GROUP_SIZE = 8;
 
 		ClearShader->Use();
-		glBindImageTexture(0, CullVolume, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8UI);
+		glBindImageTexture(0, CullVolumes[0], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(1, CullVolumes[1], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(2, CullVolumes[2], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(3, CullVolumes[3], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 		glDispatchCompute(LIGHTCULLGRIDRES / GROUP_SIZE, LIGHTCULLGRIDRES / GROUP_SIZE, LIGHTCULLGRIDRES / GROUP_SIZE);
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		
 		CullGenShader->Use();
 
 		CullGenShader->SetVector3f("u_Position", Position);
-		CullGenShader->SetFloat("u_Res", LIGHTCULLGRIDRES);
+		CullGenShader->SetInteger("u_Res", LIGHTCULLGRIDRES);
 		CullGenShader->SetFloat("u_Size", RangeV);
 
-		glBindImageTexture(0, CullVolume, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8UI);
+		glBindImageTexture(0, CullVolumes[0], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(1, CullVolumes[1], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(2, CullVolumes[2], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(3, CullVolumes[3], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 		glDispatchCompute(LIGHTCULLGRIDRES / GROUP_SIZE, LIGHTCULLGRIDRES / GROUP_SIZE, LIGHTCULLGRIDRES / GROUP_SIZE);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, AtomicIndicesSSBO);
 		//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	}
 
-	GLuint LightCuller::GetVolume() {
-		return CullVolume;
+	GLuint LightCuller::GetVolume(int i) {
+		return CullVolumes[i];
 	}
 
 	int LightCuller::GetVolSize()

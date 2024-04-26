@@ -16,7 +16,7 @@ namespace Candela {
 		void CreateVolumes();
 		void RecompileShaders();
 		void GenerateVolume(glm::vec3 Position, GLuint SphereLightSSBO);
-		GLuint GetVolume();
+		GLuint GetVolume(int);
 		int GetVolSize();
 		int GetVolRange();
 	}

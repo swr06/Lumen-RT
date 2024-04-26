@@ -1,21 +1,27 @@
-#version 430 core
-#define COMPUTE
+#version 450 core
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
-layout(rgba8ui, binding = 0) uniform uimage3D o_Texture;
+layout(r8ui, binding = 0) uniform uimage3D o_Texture;
+layout(r8ui, binding = 1) uniform uimage3D o_Texture1;
+layout(r8ui, binding = 2) uniform uimage3D o_Texture2;
+layout(r8ui, binding = 3) uniform uimage3D o_Texture3;
 
 uniform vec3 u_Position;
 
-uniform float u_Res;
+uniform int u_Res;
 uniform float u_Size;
 
 layout (std430, binding = 0) buffer atomicLightIDS {
     int LightIndicesCounter[];
 };
 
+int Idx3DToLinear(int x, int y, int z) {
+	return (z * u_Res * u_Res) + (y * u_Res) + x;
+}
+
 vec3 ToWorldSpace(vec3 VoxelPos) {
-	VoxelPos /= u_Res;
+	VoxelPos /= float(u_Res);
 	vec3 W = u_Size * (VoxelPos - 0.5f);
 	W += u_Position;
 	return W;
@@ -24,8 +30,13 @@ vec3 ToWorldSpace(vec3 VoxelPos) {
 void main() { 
 	ivec3 Texel =  ivec3(gl_GlobalInvocationID.xyz);
 
-	vec3 WPos = ToWorldSpace(vec3(Texel));
+	int LinearIndex = Idx3DToLinear(Texel.x, Texel.y, Texel.z);
 
+	int CurrentLID = LightIndicesCounter[LinearIndex];
+
+	atomicAdd(LightIndicesCounter[LinearIndex], 1);
+
+	vec3 WPos = ToWorldSpace(vec3(Texel));
 	bool t = false;
 
 	if (distance(WPos, vec3(1.0f, 1.0f, 1.0f)) < 4.) {
