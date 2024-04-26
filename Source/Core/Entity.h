@@ -16,6 +16,14 @@ namespace Candela
 
 		~Entity();
 
+		glm::vec3 ExtractScale() {
+			glm::vec3 scale;
+			scale.x = glm::length(glm::vec3(m_Model[0][0], m_Model[0][1], m_Model[0][2]));
+			scale.y = glm::length(glm::vec3(m_Model[1][0], m_Model[1][1], m_Model[1][2]));
+			scale.z = glm::length(glm::vec3(m_Model[2][0], m_Model[2][1], m_Model[2][2]));
+			return scale;
+		}
+
 		//Entity(const Entity&) = delete;
 		//Entity operator=(Entity const&) = delete;
 		//

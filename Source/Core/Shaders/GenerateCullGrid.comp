@@ -12,9 +12,22 @@ uniform vec3 u_Position;
 uniform int u_Res;
 uniform float u_Size;
 
+uniform int u_LightCount;
+
+struct SphereLight {
+	vec4 PositionRadius;
+	vec4 ColorEmissive;
+};
+
+
 layout (std430, binding = 0) buffer atomicLightIDS {
     int LightIndicesCounter[];
 };
+
+layout (std430, binding = 1) buffer SSBO_SphereLights {
+	SphereLight SphereLights[];
+};
+
 
 int Idx3DToLinear(int x, int y, int z) {
 	return (z * u_Res * u_Res) + (y * u_Res) + x;
@@ -32,15 +45,39 @@ void main() {
 
 	int LinearIndex = Idx3DToLinear(Texel.x, Texel.y, Texel.z);
 
-	int CurrentLID = atomicAdd(LightIndicesCounter[LinearIndex], 1);
-	barrier();
-
 	vec3 WPos = ToWorldSpace(vec3(Texel));
-	bool t = false;
+	bool WriteLight = false;
+	int WriteData = 0;
 
-	if (distance(WPos, vec3(1.0f, 1.0f, 1.0f)) < 4.) {
-		t= true;
+	for (int i = 0 ; i < u_LightCount ; i++) {
+
+		vec3 Sph = SphereLights[i].PositionRadius.xyz;
+
+		if (distance(WPos, Sph) < 4.) 
+		{
+			WriteLight= true;
+			WriteData = i + 1;
+		}
 	}
 
-	imageStore(o_Texture, ivec3(gl_GlobalInvocationID.xyz), t? ivec4(1) : ivec4(0));
+	if (WriteLight) {
+		int CurrentWriteTex = atomicAdd(LightIndicesCounter[LinearIndex], 1);
+
+		if (CurrentWriteTex == 0) {
+			imageStore(o_Texture, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
+		}
+
+		else if (CurrentWriteTex == 1) {
+			imageStore(o_Texture1, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
+		}
+
+		else if (CurrentWriteTex == 2) {
+			imageStore(o_Texture2, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
+		}
+
+		else if (CurrentWriteTex == 3) {
+			imageStore(o_Texture3, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
+		}
+	}
+
 } 

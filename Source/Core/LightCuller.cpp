@@ -9,7 +9,7 @@ namespace Candela {
 	static GLClasses::ComputeShader* ClearShader;
 	static GLClasses::ComputeShader* CullGenShader;
 
-	const float RangeV = 48;
+	const float RangeV = 32;
 
 	static GLuint CullVolumes[4];
 
@@ -59,7 +59,7 @@ namespace Candela {
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 
-	void LightCuller::GenerateVolume(glm::vec3 Position,  GLuint SphereLightSSBO)
+	void LightCuller::GenerateVolume(glm::vec3 Position,  GLuint SphereLightSSBO, int NumberOfSphereLights)
 	{
 		glClearNamedBufferData(AtomicIndicesSSBO, GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, nullptr);
 
@@ -86,14 +86,16 @@ namespace Candela {
 
 		CullGenShader->SetVector3f("u_Position", Position);
 		CullGenShader->SetInteger("u_Res", LIGHTCULLGRIDRES);
+		CullGenShader->SetInteger("u_LightCount", NumberOfSphereLights);
 		CullGenShader->SetFloat("u_Size", RangeV);
 
 		glBindImageTexture(0, CullVolumes[0], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 		glBindImageTexture(1, CullVolumes[1], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 		glBindImageTexture(2, CullVolumes[2], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 		glBindImageTexture(3, CullVolumes[3], 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
-		glDispatchCompute(LIGHTCULLGRIDRES / GROUP_SIZE, LIGHTCULLGRIDRES / GROUP_SIZE, LIGHTCULLGRIDRES / GROUP_SIZE);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, AtomicIndicesSSBO);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SphereLightSSBO);
+		glDispatchCompute(LIGHTCULLGRIDRES / GROUP_SIZE, LIGHTCULLGRIDRES / GROUP_SIZE, LIGHTCULLGRIDRES / GROUP_SIZE);
 		//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	}
 

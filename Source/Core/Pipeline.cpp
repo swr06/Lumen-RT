@@ -1086,8 +1086,8 @@ void Candela::StartPipeline()
 	// Create sphere 
 	Entity SphereEntity(&Sphere);
 	SphereEntity.m_Model = glm::translate(glm::mat4(1.0f), glm::vec3(-14.0f, 6.25f, -0.1f));
-	//SphereEntity.m_IsSphereLight = true; 
-	//SphereEntity.m_EmissiveAmount = 8.0f;
+	SphereEntity.m_IsSphereLight = true; 
+	SphereEntity.m_EmissiveAmount = 8.0f;
 
 	// Add entities to the render list 
 	EntityRenderList = { &MainModelEntity, &DragonEntity, &MetalObjectEntity, &GlassDragon, &SphereEntity };
@@ -1296,9 +1296,10 @@ void Candela::StartPipeline()
 
 		for (auto& e : EntityRenderList) {
 			if (e->m_IsSphereLight) {
+
 				SphereLight s;
-				s.PositionRadius = glm::vec4(glm::vec3(e->m_Model[3]), 1.0f);
-				s.ColorEmissivitys = glm::vec4(glm::vec3(1), 1.0f);
+				s.PositionRadius = glm::vec4(glm::vec3(e->m_Model[3]), e->ExtractScale().x);
+				s.ColorEmissivitys = glm::vec4(glm::vec3(1.0f), e->m_EmissiveAmount);
 				SphereLights.push_back(s);
 			}
 		}
@@ -1310,7 +1311,7 @@ void Candela::StartPipeline()
 		// Light Culler 
 
 		if (UpdateLightCullingVolume) {
-			LightCuller::GenerateVolume(Camera.GetPosition(), SphereLightSSBO);
+			LightCuller::GenerateVolume(Camera.GetPosition(), SphereLightSSBO, SphereLights.size());
 		}
 
 		// 
@@ -1415,6 +1416,7 @@ void Candela::StartPipeline()
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, CollisionResultSSBO);
 			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::ivec4) * 1, &Retrieved);;
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 
 			if (app.GetCurrentFrame() % 8 == 0)
 				std::cout << "\nPlayer Collision Test Result : " << Retrieved.x << "  " << Retrieved.y << "  " << Retrieved.z << "  " << Retrieved.w << "  ";
@@ -2303,8 +2305,8 @@ void Candela::StartPipeline()
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, SphereLightSSBO);
 
 		glBindImageTexture(0, GBuffer.GetTexture(3), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
-		glBindImageTexture(4, Voxelizer::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
-		//glBindImageTexture(4, LightCuller::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8UI);
+		//glBindImageTexture(4, Voxelizer::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(4, LightCuller::GetVolume(0), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 
 		ScreenQuadVAO.Bind();
 		glDrawArrays(GL_TRIANGLES, 0, 6);

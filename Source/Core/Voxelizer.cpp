@@ -2,14 +2,14 @@
 
 #include "ModelRenderer.h"
 
-#define VOXELRES 16
+#define VOXELRES 64
 
 namespace Candela {
 
 	static GLClasses::Shader* VoxelizeShader;
 	static GLClasses::ComputeShader* ClearShader;
 
-	const float RangeV = 16;
+	const float RangeV = 32;
 
 	static GLuint VoxelMap = 0;
 
