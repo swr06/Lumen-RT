@@ -32,9 +32,8 @@ void main() {
 
 	int LinearIndex = Idx3DToLinear(Texel.x, Texel.y, Texel.z);
 
-	int CurrentLID = LightIndicesCounter[LinearIndex];
-
-	atomicAdd(LightIndicesCounter[LinearIndex], 1);
+	int CurrentLID = atomicAdd(LightIndicesCounter[LinearIndex], 1);
+	barrier();
 
 	vec3 WPos = ToWorldSpace(vec3(Texel));
 	bool t = false;
