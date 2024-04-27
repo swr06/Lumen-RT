@@ -57,27 +57,30 @@ void main() {
 		{
 			WriteLight= true;
 			WriteData = i + 1;
+
+			int CurrentWriteTex = atomicAdd(LightIndicesCounter[LinearIndex], 1);
+
+			if (CurrentWriteTex == 0) {
+				imageStore(o_Texture, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
+			}
+
+			else if (CurrentWriteTex == 1) {
+				imageStore(o_Texture1, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
+			}
+
+			else if (CurrentWriteTex == 2) {
+				imageStore(o_Texture2, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
+			}
+
+			else if (CurrentWriteTex == 3) {
+				imageStore(o_Texture3, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
+			}
+
+			if (CurrentWriteTex >= 3) {
+				break;
+			}
 		}
 	}
 
-	if (WriteLight) {
-		int CurrentWriteTex = atomicAdd(LightIndicesCounter[LinearIndex], 1);
-
-		if (CurrentWriteTex == 0) {
-			imageStore(o_Texture, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
-		}
-
-		else if (CurrentWriteTex == 1) {
-			imageStore(o_Texture1, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
-		}
-
-		else if (CurrentWriteTex == 2) {
-			imageStore(o_Texture2, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
-		}
-
-		else if (CurrentWriteTex == 3) {
-			imageStore(o_Texture3, ivec3(gl_GlobalInvocationID.xyz), ivec4(WriteData));
-		}
-	}
 
 } 

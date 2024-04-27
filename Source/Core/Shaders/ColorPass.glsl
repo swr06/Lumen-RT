@@ -418,6 +418,17 @@ float SmoothMin(float a, float b, float k) {
     return mix(a, b, h) - k*h*(1.0-h);
 }
 
+ivec3 TransformToVoxelSpaceI(vec3 WorldPosition)
+{
+	WorldPosition = WorldPosition - u_InverseView[3].xyz;
+	float Size = 32.0f;
+	float HalfExtent = Size / 2.0f;
+	vec3 ScaledPos = WorldPosition / HalfExtent;
+	vec3 Voxel = ScaledPos;
+	Voxel = Voxel * 0.5f + 0.5f;
+	return ivec3(Voxel * 64.0f);
+}
+
 const vec3 SunColor = SUN_COLOR_LIGHTING;
 
 void main() 
@@ -425,6 +436,7 @@ void main()
 
 	vec3 RayOrigin = u_InverseView[3].xyz;
 	vec3 RayDirection = normalize(SampleIncidentRayDirection(v_TexCoords));
+
 	
 	float BayerHash = fract(fract(mod(float(u_Frame), 256.0f) * (1.0 / 1.61803398)) + bayer32(gl_FragCoord.st));
 
@@ -472,6 +484,12 @@ void main()
 	vec4 NormalLF = texelFetch(u_NormalLFTexture, Pixel, 0);
 	vec3 Albedo = texelFetch(u_AlbedoTexture, Pixel, 0).xyz;
 	vec3 PBR = texelFetch(u_PBRTexture, Pixel, 0).xyz;
+
+	ivec3 VoxelCoord = TransformToVoxelSpaceI(WorldPosition);
+
+	//uint data = imageLoad(o_VoxelVolume, ivec3(VoxelCoord.xyz)).x;
+	
+
 
 	// DEBUG 
 	/////////
@@ -546,6 +564,7 @@ void main()
 	}
 
 	o_Color = Combined.xyz;
+
 
 	if (u_DebugMode == 0) {
 		DrawProbeSphereGrid(RayOrigin, RayDirection, SurfaceDistance, o_Color);

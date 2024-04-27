@@ -1089,6 +1089,11 @@ void Candela::StartPipeline()
 	SphereEntity.m_IsSphereLight = true; 
 	SphereEntity.m_EmissiveAmount = 8.0f;
 
+	Entity SphereEntity2(&Sphere);
+	SphereEntity2.m_Model = glm::translate(glm::mat4(1.0f), glm::vec3(-8.0f, 6.25f, -0.1f));
+	SphereEntity2.m_IsSphereLight = true;
+	SphereEntity2.m_EmissiveAmount = 8.0f;
+
 	// Add entities to the render list 
 	EntityRenderList = { &MainModelEntity, &DragonEntity, &MetalObjectEntity, &GlassDragon, &SphereEntity };
 
@@ -2305,8 +2310,8 @@ void Candela::StartPipeline()
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, SphereLightSSBO);
 
 		glBindImageTexture(0, GBuffer.GetTexture(3), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
-		//glBindImageTexture(4, Voxelizer::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
-		glBindImageTexture(4, LightCuller::GetVolume(0), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(4, Voxelizer::GetVolume(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		//glBindImageTexture(4, LightCuller::GetVolume(1), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
 
 		ScreenQuadVAO.Bind();
 		glDrawArrays(GL_TRIANGLES, 0, 6);
