@@ -16,6 +16,11 @@
 layout(local_size_x = 16, local_size_y = 16) in;
 layout(rgba16f, binding = 0) uniform image2D o_OutputData;
 
+layout(r8ui, binding = 1) uniform uimage3D o_LightCullData;
+layout(r8ui, binding = 2) uniform uimage3D o_LightCullData1;
+layout(r8ui, binding = 3) uniform uimage3D o_LightCullData2;
+layout(r8ui, binding = 4) uniform uimage3D o_LightCullData3;
+
 uniform mat4 u_Projection;
 uniform mat4 u_View;
 uniform mat4 u_InverseProjection;
@@ -51,6 +56,9 @@ uniform usampler3D u_SHDataB;
 uniform float u_zNear;
 uniform float u_zFar;
 
+uniform int u_LightCullGridRes;
+uniform float u_LightCullGridScale;
+
 uniform bool u_Checker;
 
 uniform bool u_SecondBounce;
@@ -59,6 +67,9 @@ uniform bool u_SecondBounceRT;
 uniform bool u_IndirectSSCaustics;
 uniform bool DO_BL_SAMPLING;
 
+uniform bool u_GenerateLightCullGrid;
+uniform bool u_DoScreentrace;
+
 uniform sampler2D u_IndirectDiffuse; // <- Previous frame diffuse, to create a positive feedback loop 
 uniform sampler2D u_MotionVectors;
 
@@ -66,6 +77,19 @@ uniform mat4 u_PrevProjection;
 uniform mat4 u_PrevView;
 uniform mat4 u_PrevInverseProjection;
 uniform mat4 u_PrevInverseView;
+
+struct SphereLight {
+	vec4 PositionRadius;
+	vec4 ColorEmissive;
+};
+
+layout (std430, binding = 0) buffer atomicLightIDS {
+    int LightIndicesCounter[];
+};
+
+layout (std430, binding = 1) buffer SSBO_SphereLights {
+	SphereLight SphereLights[];
+};
 
 vec3 Reprojection(vec3 WorldPos) 
 {
@@ -379,9 +403,23 @@ float SeedFunction(float Input) {
 	//return Input * (2.0f - Input);
 }
 
+ivec3 TransformToVoxelSpaceI(vec3 WorldPosition)
+{
+	WorldPosition = WorldPosition - u_InverseView[3].xyz;
+	float HalfExtent = u_LightCullGridScale / 2.0f;
+	vec3 ScaledPos = WorldPosition / HalfExtent;
+	vec3 Voxel = ScaledPos;
+	Voxel = Voxel * 0.5f + 0.5f;
+	return ivec3(Voxel * u_LightCullGridRes);
+}
+
+int Idx3DToLinear(int x, int y, int z) {
+	return (z * u_LightCullGridRes * u_LightCullGridRes) + (y * u_LightCullGridRes) + x;
+}
+
 bool DO_SECOND_BOUNCE = u_SecondBounce;
 bool RT_SECOND_BOUNCE = u_SecondBounceRT;
-bool DO_SCREENTRACE = true;
+bool DO_SCREENTRACE = u_DoScreentrace;
 
 void main() {
 
@@ -444,7 +482,37 @@ void main() {
 
 	vec3 RayOrigin = WorldPosition + Normal * 0.05f;
 	vec3 RayDirection = CosWeightedHemisphere(Normal, hash2());
+	ivec3 VoxelCoord = TransformToVoxelSpaceI(WorldPosition);
 
+	if (u_GenerateLightCullGrid) {
+		int Numlights = LightIndicesCounter[Idx3DToLinear(VoxelCoord.x, VoxelCoord.y, VoxelCoord.z)];
+
+		if (Numlights > 0) {
+
+			int SampleLight = int(round(hash2().x * float(Numlights - 1)));
+			uint LightIdx = 0; ;
+
+			if (SampleLight == 0) {
+				LightIdx = imageLoad(o_LightCullData, ivec3(VoxelCoord.xyz)).x;
+			} else if (SampleLight == 1) {
+				LightIdx = imageLoad(o_LightCullData1, ivec3(VoxelCoord.xyz)).x;
+			} else if (SampleLight == 2) {
+				LightIdx = imageLoad(o_LightCullData2, ivec3(VoxelCoord.xyz)).x;
+			} else if (SampleLight == 3) {
+				LightIdx = imageLoad(o_LightCullData3, ivec3(VoxelCoord.xyz)).x;
+			}
+
+			LightIdx--;
+
+			if (LightIdx >= 0) {
+
+				SphereLight Light = SphereLights[LightIdx];
+
+				RayDirection = normalize(Light.PositionRadius.xyz - RayOrigin);
+			}
+		}
+	}
+	
 	// First bounce intersection outputs 
 	vec4 TUVW = vec4(-1.0f); 
 	vec4 Albedo = vec4(0.0f);

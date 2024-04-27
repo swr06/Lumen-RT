@@ -53,7 +53,7 @@ void main() {
 
 		vec3 Sph = SphereLights[i].PositionRadius.xyz;
 
-		if (distance(WPos, Sph) < 4.) 
+		if (distance(WPos, Sph) < 12.) 
 		{
 			WriteLight= true;
 			WriteData = i + 1;

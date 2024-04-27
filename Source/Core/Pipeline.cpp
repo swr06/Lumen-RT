@@ -124,6 +124,7 @@ static float ShadowSBiasMultiplier = 1.0f;
 static int ShadowmapUpdateRate = 1;
 
 // GI
+static bool DiffuseScreentrace = true;
 static bool DoMultiBounce = true;
 static int SecondaryBounces = 1;
 static bool DoInfiniteBounceGI = true;
@@ -526,6 +527,7 @@ public:
 			ImGui::Checkbox("Temporally Filter Irradiance Volume?", &FilterIrradianceVolume);
 			ImGui::NewLine();
 			ImGui::NewLine();
+			ImGui::Checkbox("Do Diffuse Screentrace?", &DiffuseScreentrace);
 			ImGui::Checkbox("Do Diffuse Multi Bounce?", &DoMultiBounce);
 
 			if (DoMultiBounce) {
@@ -1095,7 +1097,7 @@ void Candela::StartPipeline()
 	SphereEntity2.m_EmissiveAmount = 8.0f;
 
 	// Add entities to the render list 
-	EntityRenderList = { &MainModelEntity, &DragonEntity, &MetalObjectEntity, &GlassDragon, &SphereEntity };
+	EntityRenderList = { &MainModelEntity, &DragonEntity, &MetalObjectEntity, &GlassDragon, &SphereEntity, &SphereEntity2 };
 
 	// Create the environment map (the environment map is arbitrary) 
 
@@ -1736,6 +1738,10 @@ void Candela::StartPipeline()
 		DiffuseShader.SetBool("u_SecondBounceRT", !DoInfiniteBounceGI);
 		DiffuseShader.SetBool("u_IndirectSSCaustics", IndirectSSCaustics);
 		DiffuseShader.SetBool("DO_BL_SAMPLING", DO_BL_SAMPLING);
+		DiffuseShader.SetBool("u_GenerateLightCullGrid", UpdateLightCullingVolume);
+		DiffuseShader.SetBool("u_DoScreentrace", DiffuseScreentrace);
+		DiffuseShader.SetInteger("u_LightCullGridRes", LightCuller::GetVolSize());
+		DiffuseShader.SetFloat("u_LightCullGridScale", LightCuller::GetVolRange());
 
 		SetCommonUniforms<GLClasses::ComputeShader>(DiffuseShader, UniformBuffer);
 
@@ -1790,6 +1796,13 @@ void Candela::StartPipeline()
 
 		Intersector.BindEverything(DiffuseShader, true);
 		glBindImageTexture(0, DiffuseTrace.GetTexture(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
+		glBindImageTexture(1, LightCuller::GetVolume(0), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(2, LightCuller::GetVolume(1), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(3, LightCuller::GetVolume(2), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindImageTexture(4, LightCuller::GetVolume(3), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R8UI);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, LightCuller::GetLightIndicesSSBO());
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SphereLightSSBO);
+
 		glDispatchCompute((int)floor(float(DiffuseTrace.GetWidth()) / 16.0f) + 1, (int)(floor(float(DiffuseTrace.GetHeight())) / 16.0f) + 1, 1);
 
 		// Indirect specular raytracing 

@@ -9,7 +9,7 @@ namespace Candela {
 	static GLClasses::ComputeShader* ClearShader;
 	static GLClasses::ComputeShader* CullGenShader;
 
-	const float RangeV = 32;
+	const float RangeV = 48;
 
 	static GLuint CullVolumes[4];
 
@@ -100,6 +100,11 @@ namespace Candela {
 	}
 
 	GLuint LightCuller::GetVolume(int i) {
+
+		if (i > 3) {
+			throw "bro :skull:";
+		}
+
 		return CullVolumes[i];
 	}
 
@@ -128,5 +133,9 @@ namespace Candela {
 
 	}
 
+	GLuint LightCuller::GetLightIndicesSSBO()
+	{
+		return AtomicIndicesSSBO;
+	}
 
 }
