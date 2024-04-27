@@ -165,7 +165,7 @@ void main()
         o_Color = vec3(hash2(), hash2().x);
         if (u_DebugTexValid) {
               
-              o_Color = CheckerPattern(v_TexCoords.xy * 180.0f * vec2(1., 1./Aspect)).xxx;
+              o_Color = vec3(CheckerPattern(v_TexCoords.xy * 180.0f * vec2(1., 1./Aspect)));
               bool InTex = clamp(vec2(gl_FragCoord.xy), vec2(0), vec2(textureSize(u_DebugTexture,0).xy)) == vec2(gl_FragCoord.xy);
 
 	          if (InTex) {
