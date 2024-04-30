@@ -409,9 +409,9 @@ vec3 SampleLighting(in vec2 TexCoords, in vec3 WorldPosition, in vec3 Normal, in
 
 	else {
 		
-		vec3 DiffuseIndirect = SampleProbes(WorldPosition,Normal) * PI;
+		vec3 DiffuseIndirect = SampleProbes(WorldPosition,Normal);
 		float Shadow = GetDirectShadow(WorldPosition, Normal);
-		return (vec3(Albedo) * SUN_COLOR_SPEC * Shadow) + (Albedo * sqrt(2.0f) * DiffuseIndirect.xyz); 
+		return (vec3(Albedo) * SUN_COLOR_SPEC * Shadow) + (Albedo * DiffuseIndirect.xyz); 
 
 	}
 
