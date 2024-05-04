@@ -135,6 +135,7 @@ static float RTAOStrength = 1.0f;
 // Irradiance volume 
 static bool UpdateIrradianceVolume = true;
 static bool FilterIrradianceVolume = true;
+static int MaxTemporalFramesVolume = 32;
 
 // Specular 
 static bool DoRoughSpecular = true;
@@ -535,6 +536,10 @@ public:
 
 				if (!DoInfiniteBounceGI) {
 					ImGui::SliderInt("Secondary Bounces", &SecondaryBounces, 1, 8);
+				}
+
+				else {
+					ImGui::SliderInt("Max temporal frames for irradiance cache", &MaxTemporalFramesVolume, 2, 100);
 				}
 			}
 
@@ -1485,7 +1490,7 @@ void Candela::StartPipeline()
 
 		// Update probes
 		if (UpdateIrradianceVolume) {
-			ProbeGI::UpdateProbes(app.GetCurrentFrame(), Intersector, UniformBuffer, Skymap.GetID(), FilterIrradianceVolume && !UpdatedLightThisFrame);
+			ProbeGI::UpdateProbes(app.GetCurrentFrame(), Intersector, UniformBuffer, Skymap.GetID(), FilterIrradianceVolume, MaxTemporalFramesVolume);
 		}
 
 		// VOXELIZE

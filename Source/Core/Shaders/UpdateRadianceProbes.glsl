@@ -46,6 +46,8 @@ uniform samplerCube u_Skymap;
 uniform vec3 u_VoxelRange;
 uniform vec3 u_VoxelRes;
 
+uniform float u_MaxFrames;
+
 struct ProbeMapPixel {
 	vec2 Packed;
 };
@@ -489,7 +491,7 @@ void main() {
 
 		AccumulatedFrames = int(B.w) + 1;
 
-		float TemporalAlpha = u_Temporal ? min((1.0f - (1.0f / float(AccumulatedFrames))), 0.98f) : 0.0f;
+		float TemporalAlpha = u_Temporal ? min((1.0f - (1.0f / float(AccumulatedFrames))), 1.0f - (1.0f / u_MaxFrames)) : 0.0f;
 
 		ProbeMapPixel PrevProbeData = MapData[PixelOffset];
 		vec2 WriteMoments = mix(vec2(Depth, DepthSqr), PrevProbeData.Packed.xy, TemporalAlpha);

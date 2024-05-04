@@ -133,7 +133,7 @@ static float Align(float value, float size)
 	return std::floor(value / size) * size;
 }
 
-void Candela::ProbeGI::UpdateProbes(int Frame, RayIntersector<BVH::StacklessTraversalNode>& Intersector, CommonUniforms& uniforms, GLuint Skymap, bool Temporal)
+void Candela::ProbeGI::UpdateProbes(int Frame, RayIntersector<BVH::StacklessTraversalNode>& Intersector, CommonUniforms& uniforms, GLuint Skymap, bool Temporal, int MaxFrames)
 {
 	const int ProbeGridX = PROBE_GRID_X;
 	const int ProbeGridY = PROBE_GRID_Y;
@@ -173,6 +173,7 @@ void Candela::ProbeGI::UpdateProbes(int Frame, RayIntersector<BVH::StacklessTrav
 
 	ProbeUpdate.SetInteger("u_PreviousSHA", 5);
 	ProbeUpdate.SetInteger("u_PreviousSHB", 6);
+	ProbeUpdate.SetFloat("u_MaxFrames", MaxFrames);
 	ProbeUpdate.SetBool("u_Temporal", Temporal);
 
 	for (int i = 0; i < 5; i++) {
@@ -239,7 +240,7 @@ void Candela::ProbeGI::UpdateProbes(int Frame, RayIntersector<BVH::StacklessTrav
 	glUseProgram(0);
 }
 
-void Candela::ProbeGI::UpdateProbes(int Frame, RayIntersector<BVH::StackTraversalNode>& Intersector, CommonUniforms& uniforms, GLuint Skymap, bool Temporal)
+void Candela::ProbeGI::UpdateProbes(int Frame, RayIntersector<BVH::StackTraversalNode>& Intersector, CommonUniforms& uniforms, GLuint Skymap, bool Temporal, int MaxFrames)
 {
 	const int ProbeGridX = PROBE_GRID_X;
 	const int ProbeGridY = PROBE_GRID_Y;
@@ -279,6 +280,7 @@ void Candela::ProbeGI::UpdateProbes(int Frame, RayIntersector<BVH::StackTraversa
 
 	ProbeUpdate.SetInteger("u_PreviousSHA", 5);
 	ProbeUpdate.SetInteger("u_PreviousSHB", 6);
+	ProbeUpdate.SetFloat("u_MaxFrames", MaxFrames);
 	ProbeUpdate.SetBool("u_Temporal", Temporal);
 
 	for (int i = 0; i < 5; i++) {

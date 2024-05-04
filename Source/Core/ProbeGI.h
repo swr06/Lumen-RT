@@ -20,8 +20,8 @@ namespace Candela {
 
 		void Initialize();
 
-		void UpdateProbes(int Frame, RayIntersector<BVH::StacklessTraversalNode>& Intersector, CommonUniforms& uniforms, GLuint Skymap, bool Temporal);
-		void UpdateProbes(int Frame, RayIntersector<BVH::StackTraversalNode>& Intersector, CommonUniforms& uniforms, GLuint Skymap, bool Temporal);
+		void UpdateProbes(int Frame, RayIntersector<BVH::StacklessTraversalNode>& Intersector, CommonUniforms& uniforms, GLuint Skymap, bool Temporal, int);
+		void UpdateProbes(int Frame, RayIntersector<BVH::StackTraversalNode>& Intersector, CommonUniforms& uniforms, GLuint Skymap, bool Temporal, int);
 		glm::vec3 GetProbeBoxOrigin();
 		GLuint GetProbeDataSSBO();
 		glm::uvec2 GetProbeDataTextures();

@@ -227,7 +227,7 @@ void main() {
 				GatherStatistics(u_DiffuseCurrent, Pixel, CurrentDiffuse, MinDiff, MaxDiff, MeanDiff, MomentsDiff, false);
 
 				float Bias = u_ClipStrength;
-				History.xyz = ClipToAABB(History.xyz, MinDiff.xyz - Bias, MaxDiff.xyz + Bias);
+				History.xyz = ClipToAABB(History.xyz, max(MinDiff.xyz - Bias, 0.0f), MaxDiff.xyz + Bias);
 			}
 
 			//o_Diffuse.xyz = InverseReinhard(mix(Reinhard(CurrentDiffuse.xyz), Reinhard(History.xyz), BlendFactor));
