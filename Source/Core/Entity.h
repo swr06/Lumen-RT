@@ -54,5 +54,8 @@ namespace Candela
 		bool m_UsePBRMap = true;
 
 		bool m_IsSphereLight = false;
+
+		bool m_IgnoreFromPrimaryRenderPass = false; // if set to true, the object is not rendered for primary gbuffer
+		bool __IntPlayerEntityFLAG = false;
 	};
 }

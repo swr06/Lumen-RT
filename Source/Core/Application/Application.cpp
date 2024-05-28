@@ -8,6 +8,8 @@ bool VoxelRT_keyboard_enabled;
 
 namespace Candela
 {
+	bool DoDebugCallbackOutput = false;
+
 	// Event callbacks
 	void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void MouseCallback(GLFWwindow* window, int button, int action, int mods);
@@ -22,6 +24,10 @@ namespace Candela
 		GLenum severity, GLsizei length,
 		const GLchar* msg, const void* data)
 	{
+		if (!DoDebugCallbackOutput) {
+			return;
+		}
+
 		char* _source;
 		char* _type;
 		char* _severity;
@@ -345,6 +351,11 @@ namespace Candela
 		{
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		}
+	}
+
+	bool* Application::GetDebugCallbackOutputFlagPtr()
+	{
+		return &DoDebugCallbackOutput;
 	}
 
 	// Event handling

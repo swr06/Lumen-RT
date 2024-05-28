@@ -12,6 +12,7 @@ in vec2 v_TexCoords;
 uniform sampler2D u_Texture; // <- Tonemapped input
 
 uniform bool u_Enabled;
+uniform bool u_DoGammaCurve;
 
 uniform float u_GrainStrength;
 
@@ -150,10 +151,14 @@ void main()
 
     vec3 Processed = u_Enabled ? ContrastAdaptiveSharpening(u_Texture, Pixel, SharpeningAmount) : OriginalColor;
     //vec3 Processed = u_Enabled ? FSRCAS(u_Texture, Pixel, SharpeningAmount) : OriginalColor;
+    
+    o_Color = Processed;
 
-    o_Color = LinearToSRGB(Processed);
+    if (u_DoGammaCurve) {
+        o_Color = LinearToSRGB(Processed);
+    }
+
     o_Color = clamp(o_Color, 0.0f, 1.0f);
- 
     o_Color *= Distorted.z;
 
     FilmGrain(o_Color);

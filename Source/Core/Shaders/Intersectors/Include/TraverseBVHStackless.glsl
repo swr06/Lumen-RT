@@ -3,7 +3,7 @@
 #extension GL_ARB_bindless_texture : require
 #extension GL_ARB_bindless_texture : enable
 
-layout(bindless_sampler) uniform sampler2D Textures[512];
+layout(bindless_sampler) uniform sampler2D Textures[128];
 
 uniform int u_EntityCount; 
 uniform int u_TotalNodes;
@@ -132,15 +132,15 @@ int GetStartIdx(in Node node) {
 
 bool IntersectTriangleP(vec3 r0, vec3 rD, in vec3 v1, in vec3 v2, in vec3 v3, float TMax)
 {
-    const vec3 e1 = v2 - v1;
-    const vec3 e2 = v3 - v1;
-    const vec3 s1 = cross(rD.xyz, e2);
-    const float  invd = 1.0f/(dot(s1, e1));
-    const vec3 d = r0.xyz - v1;
-    const float  b1 = dot(d, s1) * invd;
-    const vec3 s2 = cross(d, e1);
-    const float  b2 = dot(rD.xyz, s2) * invd;
-    const float temp = dot(e2, s2) * invd;
+    vec3 e1 = v2 - v1;
+    vec3 e2 = v3 - v1;
+    vec3 s1 = cross(rD.xyz, e2);
+    float  invd = 1.0f/(dot(s1, e1));
+    vec3 d = r0.xyz - v1;
+    float  b1 = dot(d, s1) * invd;
+    vec3 s2 = cross(d, e1);
+    float  b2 = dot(rD.xyz, s2) * invd;
+    float temp = dot(e2, s2) * invd;
 
     if (b1 < 0.f || b1 > 1.f || b2 < 0.f || b1 + b2 > 1.f || temp < 0.f || temp > TMax)
     {

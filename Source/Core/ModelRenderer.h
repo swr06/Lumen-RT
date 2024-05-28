@@ -14,7 +14,7 @@
 
 namespace Candela {
 
-	void RenderEntity(Entity& entity, GLClasses::Shader& shader, Frustum& frustum, bool fcull, int entity_num = 0, bool transparent_pass = false);
+	void RenderEntity(Entity& entity, GLClasses::Shader& shader, Frustum& frustum, bool fcull, int entity_num = 0, bool transparent_pass = false, bool primary_pass = false);
 	void RenderEntityV(Entity& entity, GLClasses::Shader& shader);
 	uint64_t QueryPolygonCount();
 	void ResetPolygonCount();

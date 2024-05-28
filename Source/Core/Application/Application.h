@@ -57,6 +57,8 @@ namespace Candela
 		void SetCursorLocked(bool locked);
 		inline bool GetCursorLocked() noexcept { return m_CursorLocked; }
 
+		bool* GetDebugCallbackOutputFlagPtr();
+
 		inline float GetCursorX()
 		{
 			double x, y;

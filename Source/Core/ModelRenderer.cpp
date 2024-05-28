@@ -7,8 +7,12 @@ static uint64_t PolygonsRendered = 0;
 extern int __TotalMeshesRendered;
 extern int __MainViewMeshesRendered;
 
-void Candela::RenderEntity(Entity& entity, GLClasses::Shader& shader, Frustum& frustum, bool fcull, int entity_num, bool transparent_pass)
+void Candela::RenderEntity(Entity& entity, GLClasses::Shader& shader, Frustum& frustum, bool fcull, int entity_num, bool transparent_pass, bool primary_pass)
 {
+	if (entity.m_IgnoreFromPrimaryRenderPass && primary_pass) {
+		return;
+	}
+
 	const glm::mat4 ZOrientMatrix = glm::mat4(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f));
 
 	Object* object = entity.m_Object;

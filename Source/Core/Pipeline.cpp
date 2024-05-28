@@ -96,6 +96,8 @@ static glm::vec3 PrevSunDir = _SunDirection;
 
 static int ShadowmapRes = 1024;
 
+static const bool DoPlayerCapsule = false;
+
 // Options
 
 // Refractions 
@@ -175,6 +177,7 @@ static bool DoScreenspaceShadow = false;
 static bool DoVoxelization = false;
 
 // Post 
+static bool DoGammaCurve = true;
 static int SelectedTonemap = 0;
 
 static bool DoTAA = true;
@@ -482,6 +485,8 @@ public:
 			ImGui::Text("Total Number of Meshes Rendered : %d", __TotalMeshesRendered);
 			ImGui::NewLine();
 			ImGui::NewLine();
+			ImGui::Checkbox("Output Debug Callback", this->GetDebugCallbackOutputFlagPtr());
+			ImGui::NewLine();
 			ImGui::SliderFloat3("Sun Direction", &_SunDirection[0], -1.0f, 1.0f);
 			ImGui::NewLine();
 			ImGui::NewLine();
@@ -614,7 +619,10 @@ public:
 
 			ImGui::Text("-- Post Process --");
 			ImGui::NewLine();
+			ImGui::Checkbox("Do Gamma Curve?", &DoGammaCurve);
+			ImGui::NewLine();
 			ImGui::Checkbox("Temporal Anti Aliasing?", &DoTAA);
+			ImGui::NewLine();
 			
 			if (DoTAA) {
 				ImGui::SliderFloat("TAA Strength Multiplier", &TAAStrengthMultiplier, 0.0f, 2.0f);
@@ -827,12 +835,12 @@ public:
 };
 
 
-void RenderEntityList(const std::vector<Candela::Entity*> EntityList, GLClasses::Shader& shader, bool glasspass) {
+void RenderEntityList(const std::vector<Candela::Entity*> EntityList, GLClasses::Shader& shader, bool glasspass, bool primarypass = false) {
 
 	int En = 0;
 		
 	for (auto& e : EntityList) {
-		Candela::RenderEntity(*e, shader, Player.CameraFrustum, DoFrustumCulling, En, glasspass);
+		Candela::RenderEntity(*e, shader, Player.CameraFrustum, DoFrustumCulling, En, glasspass, primarypass);
 		En++;
 	}
 }
@@ -1030,7 +1038,7 @@ void Candela::StartPipeline()
 	
 	// Load demo models 
 	FileLoader::LoadModelFile(&MetalObject, "Models/ball/scene.gltf");
-	FileLoader::LoadModelFile(&MainModel, "Models/sponza-2/sponza.obj");
+	//FileLoader::LoadModelFile(&MainModel, "Models/sponza-2/sponza.obj");
 	FileLoader::LoadModelFile(&Dragon, "Models/dragon/dragon.obj");
 	FileLoader::LoadModelFile(&Sphere, "Models/sphere/scene.gltf");
 
@@ -1038,7 +1046,7 @@ void Candela::StartPipeline()
 	// uncomment to try them out :)
 	//FileLoader::LoadModelFile(&MainModel, "Models/architecture/scene.gltf");
 	//FileLoader::LoadModelFile(&MainModel, "Models/living_room/living_room.obj");
-	//FileLoader::LoadModelFile(&MainModel, "Models/sponza-pbr/sponza.gltf");
+	FileLoader::LoadModelFile(&MainModel, "Models/sponza-pbr/sponza.gltf");
 	//FileLoader::LoadModelFile(&MetalObject, "Models/monke/Suzanne.gltf");
 	//FileLoader::LoadModelFile(&MainModel, "Models/gitest/multibounce_gi_test_scene.gltf");
 	//FileLoader::LoadModelFile(&MainModel, "Models/sonic/N64 Yoshi Valley.obj");
@@ -1058,8 +1066,6 @@ void Candela::StartPipeline()
 	Intersector.AddObject(MetalObject);
 	Intersector.AddObject(Sphere);
 
-	Intersector.BufferData(true); // The flag is to tell the intersector to delete the cached cpu data 
-	Intersector.GenerateMeshTextureReferences(); // This function is called to generate the texture references for the BVH
 
 	// Create entities, each entity has a parent object 
 	// Entities can have an arbitrary model matrix, transparency etc.
@@ -1067,7 +1073,7 @@ void Candela::StartPipeline()
 	// Create the main model 
 	Entity MainModelEntity(&MainModel);
 	MainModelEntity.m_EntityRoughness = 0.65f;
-	//MainModelEntity.m_Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
+	MainModelEntity.m_Model = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
 	//MainModelEntity.m_Model = glm::scale(glm::mat4(1.0f), glm::vec3(10.0f));
 	//MainModelEntity.m_Model *= ZOrientMatrixNegative;
 	//MainModelEntity.m_Model *= ZOrientMatrix;
@@ -1126,6 +1132,14 @@ void Candela::StartPipeline()
 	/////////////////////////////////////////
 	/////////////////////////////////////////
 	/////////////////////////////////////////
+
+	Object PlayerObject;
+	FileLoader::LoadModelFile(&PlayerObject, "Models/player/cap.obj");
+	PlayerObject.m_Meshes[0].m_Color = glm::vec4(glm::vec3(1.), 1.);
+
+	Intersector.AddObject(PlayerObject);
+	Intersector.BufferData(true); // The flag is to tell the intersector to delete the cached cpu data 
+	Intersector.GenerateMeshTextureReferences(); // This function is called to generate the texture references for the BVH
 
 	// Create VBO and VAO for drawing the screen-sized quad.
 	GLClasses::VertexBuffer ScreenQuadVBO;
@@ -1276,6 +1290,17 @@ void Candela::StartPipeline()
 
 	while (!glfwWindowShouldClose(app.GetWindow()))
 	{
+		// Player model
+		if (DoPlayerCapsule) {
+			Entity _PlayerEntity(&PlayerObject);
+			_PlayerEntity.m_Model = glm::translate(glm::mat4(1.), Camera.GetPosition() + glm::vec3(0.0f, -2.2f, 0.0f) + Camera.GetFront() * glm::vec3(-1., 0., -1.) * 0.2f) * glm::mat4(glm::scale(glm::mat4(1.), glm::vec3(0.3f, 0.6f, 0.3f)));
+			_PlayerEntity.m_IsSphereLight = false;
+			_PlayerEntity.m_EmissiveAmount = 0.0f;
+			_PlayerEntity.m_IgnoreFromPrimaryRenderPass = true;
+			_PlayerEntity.__IntPlayerEntityFLAG = true;
+			EntityRenderList.push_back(&_PlayerEntity);
+		}
+
 		// Window is minimized.
 		if (glfwGetWindowAttrib(app.GetWindow(), GLFW_ICONIFIED)) {
 			app.OnUpdate();
@@ -1540,7 +1565,7 @@ void Candela::StartPipeline()
 		GBufferShader.SetFloat("u_ScaleLODBias", floor(log2(InternalRenderResolution)));
 		GBufferShader.SetVector2f("u_Dimensions", glm::vec2(GBuffer.GetWidth(), GBuffer.GetHeight()));
 
-		RenderEntityList(EntityRenderList, GBufferShader, false);
+		RenderEntityList(EntityRenderList, GBufferShader, false, true);
 
 		if (!RENDER_GLASS) {
 			RenderEntityList(EntityRenderList, GBufferShader, true);
@@ -2824,6 +2849,7 @@ void Candela::StartPipeline()
 
 		CASShader.SetBool("u_DebugFBOMode", EditMode && FBODebugMode);
 		CASShader.SetBool("u_DebugTexValid", EditMode && FBODebugMode && FBODebugAttachment > -1 && DebugFBO && FBODebugID >= 0);
+		CASShader.SetBool("u_DoGammaCurve", DoGammaCurve);
 		CASShader.SetInteger("u_DebugTexture", 8);
 
 		SetCommonUniforms<GLClasses::Shader>(CASShader, UniformBuffer);
@@ -2861,6 +2887,15 @@ void Candela::StartPipeline()
 		}
 
 		GLClasses::DisplayFrameRate(app.GetWindow(), EditMode ? "Candela | Edit Mode | " : "Candela | ");
+		
+		// Erase the player entity
+		if (DoPlayerCapsule) {
+			for (int i = 0; i < EntityRenderList.size(); i++) {
+				if (EntityRenderList[i]->__IntPlayerEntityFLAG) {
+					EntityRenderList.erase(EntityRenderList.begin() + i);
+				}
+			}
+		}
 	}
 }
 
