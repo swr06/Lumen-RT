@@ -121,16 +121,9 @@ See `Credits.txt`.
 
 </br>
 
-
 </br>
 
 ![i2](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image2.webp)
-
-</br>
-
-</br>
-
-![i3](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image3.webp)
 
 </br>
 
@@ -143,6 +136,12 @@ See `Credits.txt`.
 </br>
 
 ![i5](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image5.webp)
+
+</br>
+
+</br>
+
+![i3](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image3.webp)
 
 </br>
 
