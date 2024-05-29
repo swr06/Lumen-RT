@@ -111,6 +111,43 @@ See `Credits.txt`.
 
 </br>
 
+![i0](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image.webp)
+
+</br>
+
+</br>
+
+![i1](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image1.webp)
+
+</br>
+
+
+</br>
+
+![i2](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image2.webp)
+
+</br>
+
+</br>
+
+![i3](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image3.webp)
+
+</br>
+
+</br>
+
+![i4](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image4.webp)
+
+</br>
+
+</br>
+
+![i5](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/image5.webp)
+
+</br>
+
+</br>
+
 ![s1](https://github.com/swr06/Candela/blob/MainBranch/Screenshots/1.png)
 
 </br>
